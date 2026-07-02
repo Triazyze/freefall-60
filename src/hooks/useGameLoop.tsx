@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Dimensions, PanResponder } from "react-native";
 import { ItemType } from "../components/Items";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -12,7 +13,7 @@ const MAX_SCROLL_SPEED = 750;
 const ACCELERATION_RATE = 0.02;
 
 const PIXELS_PER_METER = 15;
-const DISTANCE_BETWEEN_ITEMS = 250;
+const INITIAL_DISTANCE_BETWEEN_ITEMS = 180;
 
 export interface GameObject {
   id: string;
@@ -41,6 +42,7 @@ export function useGameLoop(
   const requestRef = useRef<number | null>(null);
 
   const lastSpawnDistanceRef = useRef<number>(0);
+  const nextSpawnDistanceRef = useRef<number>(INITIAL_DISTANCE_BETWEEN_ITEMS);
   const lastTimeRef = useRef<number>(0);
   const isGameOverRef = useRef<boolean>(false);
 
@@ -58,7 +60,8 @@ export function useGameLoop(
         if (isGameOverRef.current) return;
         let newX = touchStartXRef.current + gestureState.dx;
         if (newX < 0) newX = 0;
-        if (newX > SCREEN_WIDTH - PLAYER_SIZE) newX = SCREEN_WIDTH - PLAYER_SIZE;
+        if (newX > SCREEN_WIDTH - PLAYER_SIZE)
+          newX = SCREEN_WIDTH - PLAYER_SIZE;
         playerXRef.current = newX;
       },
     }),
@@ -74,7 +77,8 @@ export function useGameLoop(
     const cappedDelta = Math.min(deltaTime, 0.1);
 
     // 1. CALCUL DE LA DIFFICULTÉ
-    let newSpeed = INITIAL_SCROLL_SPEED + totalPixelsFallenRef.current * ACCELERATION_RATE;
+    let newSpeed =
+      INITIAL_SCROLL_SPEED + totalPixelsFallenRef.current * ACCELERATION_RATE;
     if (newSpeed > MAX_SCROLL_SPEED) newSpeed = MAX_SCROLL_SPEED;
     currentScrollSpeedRef.current = newSpeed;
 
@@ -108,21 +112,25 @@ export function useGameLoop(
     itemsRef.current = itemsRef.current.filter((item) => item.y > -ITEM_SIZE);
 
     // 3. SPAWN (Système de tirage propre)
-    if (totalPixelsFallenRef.current - lastSpawnDistanceRef.current >= DISTANCE_BETWEEN_ITEMS) {
+    if (
+      totalPixelsFallenRef.current - lastSpawnDistanceRef.current >=
+      nextSpawnDistanceRef.current
+    ) {
       const randomX = Math.random() * (SCREEN_WIDTH - ITEM_SIZE);
       const rand = Math.random();
-      
+
       let spawnType: ItemType = "OBSTACLE";
       let vx: number | undefined = undefined;
-
-      if (rand < 0.25) {
-        spawnType = "BONUS"; // 25% de chance
-      } else if (rand < 0.35) {
-        spawnType = "SUPERBONUS"; // 10% de chance
-      } else if (rand < 0.50) {
-        spawnType = "MOBILEOBSTACLE"; // 15% de chance
-        vx = (Math.random() > 0.5 ? 2 : -2); // Vitesse latérale de départ
-      } // Le reste (50%) sera des OBSTACLES normaux
+      if (rand < 0.15) {
+        spawnType = "NOTHING"; // 15% de chance
+      } else if (rand < 0.25) {
+        spawnType = "BONUS"; // 10% de chance
+      } else if (rand < 0.3) {
+        spawnType = "SUPERBONUS"; // 5% de chance
+      } else if (rand < 0.4) {
+        spawnType = "MOBILEOBSTACLE"; // 10% de chance
+        vx = Math.random() > 0.5 ? 2 : -2; // Vitesse latérale de départ
+      } // Le reste (60%) sera des OBSTACLES normaux
 
       itemsRef.current.push({
         id: Math.random().toString(),
@@ -133,6 +141,7 @@ export function useGameLoop(
       });
 
       lastSpawnDistanceRef.current = totalPixelsFallenRef.current;
+      nextSpawnDistanceRef.current = 180 + Math.random() * 100;
     }
 
     // 4. COLLISIONS & GESTION DU CRASH
@@ -151,6 +160,8 @@ export function useGameLoop(
         } else if (item.type === "SUPERBONUS") {
           currentStarsRef.current += 5;
           setScore(currentStarsRef.current);
+          return false;
+        } else if (item.type === "NOTHING") {
           return false;
         } else {
           // Si c'est OBSTACLE ou MOBILEOBSTACLE -> Déclenchement immédiat du Game Over
@@ -181,7 +192,7 @@ export function useGameLoop(
       // On envoie la valeur instantanée et exacte de notre Ref de score
       onGameOverCallback(
         Math.floor(totalPixelsFallenRef.current / PIXELS_PER_METER),
-        currentStarsRef.current
+        currentStarsRef.current,
       );
     }
   };
@@ -202,7 +213,8 @@ export function useGameLoop(
     lastSpawnDistanceRef.current = 0;
     lastTimeRef.current = 0;
     currentScrollSpeedRef.current = INITIAL_SCROLL_SPEED;
-    currentStarsRef.current = 0; // Reset de la ref
+    currentStarsRef.current = 0;
+    nextSpawnDistanceRef.current = INITIAL_DISTANCE_BETWEEN_ITEMS;
 
     isGameOverRef.current = false;
     setScore(0);

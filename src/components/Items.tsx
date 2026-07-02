@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 
-export type ItemType = 'BONUS'  | 'SUPERBONUS' | 'OBSTACLE' | 'MOBILEOBSTACLE';
+export type ItemType = 'BONUS'  | 'SUPERBONUS' | 'OBSTACLE' | 'MOBILEOBSTACLE' | 'NOTHING';
 
 interface ItemProps {
   x: number;
@@ -14,6 +14,7 @@ export default function Item({ x, y, size, type }: ItemProps) {
   const isBonus = type === 'BONUS';
   const isSuperBonus = type === 'SUPERBONUS';
   const isMobileObstacle = type === 'MOBILEOBSTACLE';
+  const nothing = type === 'NOTHING';
   
   return (
     <View
@@ -22,13 +23,13 @@ export default function Item({ x, y, size, type }: ItemProps) {
         {
           width: size,
           height: size,
-          backgroundColor: isBonus ? '#2ecc71' : isSuperBonus ? '#9b59b6' : isMobileObstacle ? '#e74c3c' : '#f39c12',
-          borderRadius: isBonus ? 10 : 4, // Formes un peu différentes
+          backgroundColor: isBonus ? '#43c67a' : isSuperBonus ? '#23bfe6' : isMobileObstacle ? '#e74c3c' : nothing ? 'transparent' : '#f39c12',
+          borderRadius: isBonus || isSuperBonus ? 20 : 4,
           transform: [{ translateX: x }, { translateY: y }],
         },
       ]}
     >
-      <Text style={styles.icon}>{isBonus ? '⭐' : isSuperBonus ? '🌟' : isMobileObstacle ? '🚀' : '🦅'}</Text>
+      <Text style={styles.icon}>{isBonus ? '⭐' : isSuperBonus ? '🌟' : isMobileObstacle ? '🚀' : nothing ? '' : '🦅'}</Text>
     </View>
   );
 }

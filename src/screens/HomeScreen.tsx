@@ -6,22 +6,25 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from "react-native";
+import asyncStorage from "@react-native-async-storage/async-storage";
 
 interface HomeScreenProps {
   onStartGame: () => void;
   onOpenShop: () => void;
+  highScore: number;
 }
 
 export default function HomeScreen({
   onStartGame,
   onOpenShop,
+  highScore,
 }: HomeScreenProps) {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.title}>FREEFALL 60</Text>
         <Text style={styles.subtitle}>Un avant gout de la chute libre !</Text>
-        <Text style={styles.score}>Meilleur score: 0</Text>
+        <Text style={styles.score}>Meilleur score: {highScore} m</Text>
       </View>
 
       <View style={styles.menuContainer}>

@@ -29,7 +29,7 @@ export default function Player({ x, y, size }: PlayerProps) {
 const styles = StyleSheet.create({
   player: {
     position: 'absolute',
-    backgroundColor: '#e74c3c',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',

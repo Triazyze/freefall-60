@@ -1,15 +1,27 @@
 import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ImageBackground,
+} from "react-native";
 import Player from "../components/Player";
 import Item from "../components/Items";
 import { useGameLoop } from "../hooks/useGameLoop";
+import { BackgroundKey, BACKGROUNDS } from "../constants/background";
 
 interface GameScreenProps {
   onBackToMenu: () => void;
   onGameOverRecorded: (finalDistance: number, starsEarned: number) => void;
+  currentBackground: BackgroundKey;
 }
 
-export default function GameScreen({ onBackToMenu, onGameOverRecorded }: GameScreenProps) {
+export default function GameScreen({
+  onBackToMenu,
+  onGameOverRecorded,
+  currentBackground,
+}: GameScreenProps) {
   // CORRECTION ICI : On passe la prop au hook pour que la sauvegarde s'active !
   const {
     score,
@@ -25,7 +37,12 @@ export default function GameScreen({ onBackToMenu, onGameOverRecorded }: GameScr
   } = useGameLoop(onGameOverRecorded);
 
   return (
-    <View style={styles.container} {...panHandlers}>
+    <ImageBackground
+      source={BACKGROUNDS[currentBackground]}
+      style={styles.container}
+      {...panHandlers}
+      accessible={true}
+    >
       {/* UI Top Bar */}
       <View style={styles.uiContainer}>
         <Text style={styles.uiText}>⭐ {score}</Text>
@@ -69,14 +86,13 @@ export default function GameScreen({ onBackToMenu, onGameOverRecorded }: GameScr
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#34495e",
     overflow: "hidden",
   },
   uiContainer: {

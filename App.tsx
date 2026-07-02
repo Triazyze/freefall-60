@@ -3,7 +3,8 @@ import { SafeAreaView, StatusBar, StyleSheet, View, Text } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
-import ShopScreen from "./src/screens/ShopScreen"; // On va le créer juste après
+import ShopScreen from "./src/screens/ShopScreen";
+import { BackgroundKey } from "./src/constants/background";
 
 type ScreenState = "HOME" | "GAME" | "SHOP";
 
@@ -11,6 +12,7 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>("HOME");
   const [totalStars, setTotalStars] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(0);
+  const [currentBackground, setCurrentBackground] = useState<BackgroundKey>("sky1");
 
   // Charger les étoiles sauvegardées au démarrage de l'application
   useEffect(() => {
@@ -34,6 +36,16 @@ export default function App() {
       if (saved) setHighScore(parseInt(saved, 10));
     };
     loadHighScore();
+  }, []);
+
+  useEffect(() => {
+    const loadBackground = async () => {
+      const savedBackground = await AsyncStorage.getItem("current_background");
+      if (savedBackground) {
+        setCurrentBackground(savedBackground as BackgroundKey);
+      }
+    };
+    loadBackground();
   }, []);
 
   // Sauvegarder les étoiles après une partie ou un achat
@@ -72,6 +84,7 @@ export default function App() {
           <GameScreen
             onBackToMenu={() => setCurrentScreen("HOME")}
             onGameOverRecorded={handleGameOver}
+            currentBackground={currentBackground}
           />
         );
       case "SHOP":

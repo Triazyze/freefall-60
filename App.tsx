@@ -12,7 +12,16 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>("HOME");
   const [totalStars, setTotalStars] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(0);
-  const [currentBackground, setCurrentBackground] = useState<BackgroundKey>("sky1");
+
+  const [currentBackground, setCurrentBackground] =
+    useState<BackgroundKey>("sky1");
+  const [unlockedBackgrounds, setUnlockedBackgrounds] = useState<
+    BackgroundKey[]
+  >(["sky1"]);
+
+  const handleEquip = (id: BackgroundKey) => setCurrentBackground(id);
+  const handleUnlock = (id: BackgroundKey) =>
+    setUnlockedBackgrounds([...unlockedBackgrounds, id]);
 
   // Charger les étoiles sauvegardées au démarrage de l'application
   useEffect(() => {
@@ -93,6 +102,10 @@ export default function App() {
             totalStars={totalStars}
             onUpdateStars={saveStars}
             onBackToMenu={() => setCurrentScreen("HOME")}
+            unlockedBackgrounds={unlockedBackgrounds}
+            currentBackground={currentBackground}
+            onEquipBackground={handleEquip}
+            onUnlockBackground={handleUnlock}
           />
         );
       default:

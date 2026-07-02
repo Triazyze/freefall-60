@@ -20,17 +20,24 @@ export default function ShopScreen({
   onEquipBackground,
   onUnlockBackground,
 }: ShopScreenProps) {
+  // Une seule fonction d'achat propre qui utilise les props du parent
   const handleBuyItem = (item: ShopItem) => {
     const bgId = `sky${item.id}` as BackgroundKey;
+
     if (totalStars >= item.price) {
       const remainingStars = totalStars - item.price;
+
+      // On met à jour les étoiles dans le parent
       onUpdateStars(remainingStars);
+      // On débloque le background dans le parent
       onUnlockBackground(bgId);
+
       alert(`Achat réussi : ${item.name} !`);
     } else {
       alert("Pas assez d'étoiles !");
     }
   };
+  
   return (
     <View style={styles.container}>
       {/* Header */}

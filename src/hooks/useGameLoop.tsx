@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Dimensions, PanResponder } from "react-native";
 import { ItemType } from "../components/Items";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -13,7 +13,7 @@ const MAX_SCROLL_SPEED = 750;
 const ACCELERATION_RATE = 0.02;
 
 const PIXELS_PER_METER = 15;
-const INITIAL_DISTANCE_BETWEEN_ITEMS = 180;
+const INITIAL_DISTANCE_BETWEEN_ITEMS = 100 + Math.random() * 200;
 
 export interface GameObject {
   id: string;
@@ -25,6 +25,7 @@ export interface GameObject {
 
 export function useGameLoop(
   onGameOverCallback?: (finalDistance: number, finalScore: number) => void,
+  dynamicScreenHeight: number = SCREEN_HEIGHT,
 ) {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -45,6 +46,12 @@ export function useGameLoop(
   const nextSpawnDistanceRef = useRef<number>(INITIAL_DISTANCE_BETWEEN_ITEMS);
   const lastTimeRef = useRef<number>(0);
   const isGameOverRef = useRef<boolean>(false);
+
+  const [bgY1, setBgY1] = useState(0);
+  const [scaleY1, setScaleY1] = useState(1);
+
+  const [bgY2, setBgY2] = useState(dynamicScreenHeight);
+  const [scaleY2, setScaleY2] = useState(-1);
 
   const [, forceUpdate] = useState({});
 
@@ -111,6 +118,23 @@ export function useGameLoop(
 
     itemsRef.current = itemsRef.current.filter((item) => item.y > -ITEM_SIZE);
 
+    // Update du BG
+    setBgY1((prev) => {
+      if (prev - pixelsMovedThisFrame <= -dynamicScreenHeight) {
+        setScaleY1(-scaleY2);
+        return prev - pixelsMovedThisFrame + dynamicScreenHeight * 2;
+      }
+      return prev - pixelsMovedThisFrame;
+    });
+
+    setBgY2((prev) => {
+      if (prev - pixelsMovedThisFrame <= -dynamicScreenHeight) {
+        setScaleY2(-scaleY1);
+        return prev - pixelsMovedThisFrame + dynamicScreenHeight * 2;
+      }
+      return prev - pixelsMovedThisFrame;
+    });
+
     // 3. SPAWN (Système de tirage propre)
     if (
       totalPixelsFallenRef.current - lastSpawnDistanceRef.current >=
@@ -119,18 +143,18 @@ export function useGameLoop(
       const randomX = Math.random() * (SCREEN_WIDTH - ITEM_SIZE);
       const rand = Math.random();
 
-      let spawnType: ItemType = "OBSTACLE";
+      let spawnType: ItemType = "NOTHING";
       let vx: number | undefined = undefined;
-      if (rand < 0.15) {
-        spawnType = "NOTHING"; // 15% de chance
-      } else if (rand < 0.25) {
-        spawnType = "BONUS"; // 10% de chance
+      if (rand < 0.2) {
+        spawnType = "BONUS"; // 20% de chance
       } else if (rand < 0.3) {
-        spawnType = "SUPERBONUS"; // 5% de chance
-      } else if (rand < 0.4) {
+        spawnType = "SUPERBONUS"; // 10% de chance
+      } else if (rand < 0.6) {
+        spawnType = "OBSTACLE"; // 30% de chance
+      } else if (rand < 0.7) {
         spawnType = "MOBILEOBSTACLE"; // 10% de chance
         vx = Math.random() > 0.5 ? 2 : -2; // Vitesse latérale de départ
-      } // Le reste (60%) sera des OBSTACLES normaux
+      } // Le reste (30%) sera du vide (NOTHING)
 
       itemsRef.current.push({
         id: Math.random().toString(),
@@ -141,7 +165,7 @@ export function useGameLoop(
       });
 
       lastSpawnDistanceRef.current = totalPixelsFallenRef.current;
-      nextSpawnDistanceRef.current = 180 + Math.random() * 100;
+      nextSpawnDistanceRef.current = 100 + Math.random() * 200;
     }
 
     // 4. COLLISIONS & GESTION DU CRASH
@@ -235,5 +259,9 @@ export function useGameLoop(
     resetGame,
     PLAYER_SIZE,
     ITEM_SIZE,
+    bgY1,
+    scaleY1,
+    bgY2,
+    scaleY2,
   };
 }

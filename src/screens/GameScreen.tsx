@@ -1,11 +1,5 @@
-import React from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  ImageBackground,
-} from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, View, Text, TouchableOpacity, Image } from "react-native";
 import Player from "../components/Player";
 import Item from "../components/Items";
 import { useGameLoop } from "../hooks/useGameLoop";
@@ -22,7 +16,9 @@ export default function GameScreen({
   onGameOverRecorded,
   currentBackground,
 }: GameScreenProps) {
-  // CORRECTION ICI : On passe la prop au hook pour que la sauvegarde s'active !
+  // On garde une hauteur locale qui s'adaptera parfaitement à l'écran
+  const [screenHeight, setScreenHeight] = useState(800);
+
   const {
     score,
     distance,
@@ -34,15 +30,50 @@ export default function GameScreen({
     resetGame,
     PLAYER_SIZE,
     ITEM_SIZE,
-  } = useGameLoop(onGameOverRecorded);
+    bgY1,
+    scaleY1,
+    bgY2,
+    scaleY2,
+  } = useGameLoop(onGameOverRecorded, screenHeight);
 
   return (
-    <ImageBackground
-      source={BACKGROUNDS[currentBackground]}
+    <View
       style={styles.container}
       {...panHandlers}
       accessible={true}
+      onLayout={(event) => {
+        const { height } = event.nativeEvent.layout;
+        setScreenHeight(height);
+      }}
     >
+      {/* --- ARRIÈRE-PLAN ANIMÉ EN MIROIR COMPLÈTEMENT STABLE --- */}
+      <View style={StyleSheet.absoluteFill}>
+        <Image
+          source={BACKGROUNDS[currentBackground]}
+          style={[
+            styles.bgImage,
+            { top: bgY1, transform: [{ scaleY: scaleY1 }] },
+          ]}
+        />
+        <Image
+          source={BACKGROUNDS[currentBackground]}
+          style={[
+            styles.bgImage,
+            { top: bgY2, transform: [{ scaleY: scaleY2 }] },
+          ]}
+        />
+
+        {/* ☁️ BANDEAU DE BRUME CORRIGÉ ☁️ */}
+        <View
+          style={[
+            styles.transitionBlur,
+            {
+              top: bgY1 + screenHeight - 30,
+            },
+          ]}
+        />
+      </View>
+
       {/* UI Top Bar */}
       <View style={styles.uiContainer}>
         <Text style={styles.uiText}>⭐ {score}</Text>
@@ -74,7 +105,6 @@ export default function GameScreen({
             <Text style={styles.buttonText}>Recommencer</Text>
           </TouchableOpacity>
 
-          {/* SÉCURISATION ICI : On reset le moteur de jeu avant de changer d'écran */}
           <TouchableOpacity
             style={[styles.button, styles.menuButton]}
             onPress={() => {
@@ -86,14 +116,27 @@ export default function GameScreen({
           </TouchableOpacity>
         </View>
       )}
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    overflow: "hidden",
+  container: { flex: 1, backgroundColor: "#000", overflow: "hidden" },
+  bgImage: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    transform: [{ scaleX: 1.9 }],
+  },
+  transitionBlur: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: "rgba(227, 227, 227, 0.5)",
   },
   uiContainer: {
     position: "absolute",
@@ -127,10 +170,7 @@ const styles = StyleSheet.create({
     color: "#e74c3c",
     marginBottom: 10,
   },
-  finalScoreText: {
-    fontSize: 18,
-    color: "#fff",
-  },
+  finalScoreText: { fontSize: 18, color: "#fff" },
   button: {
     backgroundColor: "#2ecc71",
     paddingHorizontal: 40,
@@ -140,12 +180,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
-  menuButton: {
-    backgroundColor: "#7f8c8d",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  menuButton: { backgroundColor: "#7f8c8d" },
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
 });

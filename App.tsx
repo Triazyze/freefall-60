@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, StatusBar, StyleSheet, View, Text } from "react-native";
+import { View, StatusBar, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
@@ -10,71 +10,76 @@ type ScreenState = "HOME" | "GAME" | "SHOP";
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>("HOME");
+  
+  // States du jeu et de la boutique
   const [totalStars, setTotalStars] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(0);
+  const [currentBackground, setCurrentBackground] = useState<BackgroundKey>("sky1");
+  const [unlockedBackgrounds, setUnlockedBackgrounds] = useState<BackgroundKey[]>(["sky1"]);
 
-  const [currentBackground, setCurrentBackground] =
-    useState<BackgroundKey>("sky1");
-  const [unlockedBackgrounds, setUnlockedBackgrounds] = useState<
-    BackgroundKey[]
-  >(["sky1"]);
-
-  const handleEquip = (id: BackgroundKey) => setCurrentBackground(id);
-  const handleUnlock = (id: BackgroundKey) =>
-    setUnlockedBackgrounds([...unlockedBackgrounds, id]);
-
-  // Charger les étoiles sauvegardées au démarrage de l'application
+  // 1. LE REGROUPEMENT ULTIME : Un seul chargement au démarrage de l'app
   useEffect(() => {
-    const loadStars = async () => {
+    const loadAllGameData = async () => {
       try {
-        const savedStars = await AsyncStorage.getItem("total_stars");
-        if (savedStars !== null) {
-          setTotalStars(parseInt(savedStars, 10));
-        }
+        const [savedStars, savedHighScore, savedBg, savedUnlocked] = await Promise.all([
+          AsyncStorage.getItem("total_stars"),
+          AsyncStorage.getItem("high_score"),
+          AsyncStorage.getItem("current_background"),
+          AsyncStorage.getItem("unlocked_backgrounds"),
+        ]);
+
+        if (savedStars !== null) setTotalStars(parseInt(savedStars, 10));
+        if (savedHighScore !== null) setHighScore(parseInt(savedHighScore, 10));
+        if (savedBg !== null) setCurrentBackground(savedBg as BackgroundKey);
+        if (savedUnlocked !== null) setUnlockedBackgrounds(JSON.parse(savedUnlocked));
       } catch (e) {
-        console.error("Erreur lors du chargement des étoiles", e);
+        console.error("Erreur lors du chargement des données globales", e);
       }
     };
-    loadStars();
+    loadAllGameData();
   }, []);
 
-  // Charge le record existant au démarrage de l'appli
-  useEffect(() => {
-    const loadHighScore = async () => {
-      const saved = await AsyncStorage.getItem("high_score");
-      if (saved) setHighScore(parseInt(saved, 10));
-    };
-    loadHighScore();
-  }, []);
-
-  useEffect(() => {
-    const loadBackground = async () => {
-      const savedBackground = await AsyncStorage.getItem("current_background");
-      if (savedBackground) {
-        setCurrentBackground(savedBackground as BackgroundKey);
-      }
-    };
-    loadBackground();
-  }, []);
-
-  // Sauvegarder les étoiles après une partie ou un achat
-  const saveStars = async (newStarsAmount: number) => {
+  // 2. Fonctions d'action de la boutique (Sauvegarde + Modif du state en même temps)
+  const handleEquip = async (id: BackgroundKey) => {
+    setCurrentBackground(id);
     try {
-      setTotalStars(newStarsAmount);
+      await AsyncStorage.setItem("current_background", id);
+    } catch (e) {
+      console.error("Erreur sauvegarde équipement", e);
+    }
+  };
+
+  const handleUnlock = async (id: BackgroundKey) => {
+    const updatedList = [...unlockedBackgrounds, id];
+    setUnlockedBackgrounds(updatedList);
+    try {
+      await AsyncStorage.setItem("unlocked_backgrounds", JSON.stringify(updatedList));
+    } catch (e) {
+      console.error("Erreur sauvegarde achat background", e);
+    }
+  };
+
+  const saveStars = async (newStarsAmount: number) => {
+    setTotalStars(newStarsAmount);
+    try {
       await AsyncStorage.setItem("total_stars", newStarsAmount.toString());
     } catch (e) {
       console.error("Erreur lors de la sauvegarde des étoiles", e);
     }
   };
 
-  // Gestion de la fin de partie (appelée par le GameScreen)
+  // Gestion de la fin de partie
   const handleGameOver = async (finalDistance: number, starsEarned: number) => {
     const newTotal = totalStars + starsEarned;
-    await saveStars(newTotal);
+    await saveStars(newTotal); // Sauvegarde et met à jour les étoiles
 
     if (finalDistance > highScore) {
       setHighScore(finalDistance);
-      await AsyncStorage.setItem("high_score", finalDistance.toString());
+      try {
+        await AsyncStorage.setItem("high_score", finalDistance.toString());
+      } catch (e) {
+        console.error("Erreur sauvegarde high score", e);
+      }
     }
   };
 
@@ -114,10 +119,10 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       {renderScreen()}
-    </SafeAreaView>
+    </View>
   );
 }
 

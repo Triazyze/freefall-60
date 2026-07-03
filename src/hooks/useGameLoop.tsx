@@ -26,6 +26,7 @@ export interface GameObject {
 export function useGameLoop(
   onGameOverCallback?: (finalDistance: number, finalScore: number) => void,
   dynamicScreenHeight: number = SCREEN_HEIGHT,
+  isBgScrollEnabled: boolean = true,
 ) {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -119,20 +120,22 @@ export function useGameLoop(
     itemsRef.current = itemsRef.current.filter((item) => item.y > -ITEM_SIZE);
 
     // Update du BG
+    const bgMovement = isBgScrollEnabled ? pixelsMovedThisFrame : 0;
+
     setBgY1((prev) => {
-      if (prev - pixelsMovedThisFrame <= -dynamicScreenHeight) {
+      if (prev - bgMovement <= -dynamicScreenHeight) {
         setScaleY1(-scaleY2);
-        return prev - pixelsMovedThisFrame + dynamicScreenHeight * 2;
+        return prev - bgMovement + dynamicScreenHeight * 2;
       }
-      return prev - pixelsMovedThisFrame;
+      return prev - bgMovement;
     });
 
     setBgY2((prev) => {
-      if (prev - pixelsMovedThisFrame <= -dynamicScreenHeight) {
+      if (prev - bgMovement <= -dynamicScreenHeight) {
         setScaleY2(-scaleY1);
-        return prev - pixelsMovedThisFrame + dynamicScreenHeight * 2;
+        return prev - bgMovement + dynamicScreenHeight * 2;
       }
-      return prev - pixelsMovedThisFrame;
+      return prev - bgMovement;
     });
 
     // 3. SPAWN (Système de tirage propre)
@@ -263,5 +266,6 @@ export function useGameLoop(
     scaleY1,
     bgY2,
     scaleY2,
+    isBgScrollEnabled,
   };
 }

@@ -8,6 +8,10 @@ export interface ShopScreenProps {
   currentBackground: BackgroundKey;
   onEquipBackground: (id: BackgroundKey) => void;
   onUnlockBackground: (id: BackgroundKey) => void;
+  unlockedIcons: string[];
+  currentIcon: string;
+  onEquipIcon: (id: string) => void;
+  onUnlockIcon: (id: string) => void;
 }
 
 export interface ShopItem {
@@ -15,5 +19,5 @@ export interface ShopItem {
   name: string;
   price: number;
   icon?: string;
-  image: string;
+  image?: string;
 }

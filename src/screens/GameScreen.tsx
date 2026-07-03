@@ -4,17 +4,22 @@ import Player from "../components/Player";
 import Item from "../components/Items";
 import { useGameLoop } from "../hooks/useGameLoop";
 import { BackgroundKey, BACKGROUNDS } from "../constants/background";
+import { PLAYER_ITEMS } from "../constants/shopItems";
 
 interface GameScreenProps {
   onBackToMenu: () => void;
   onGameOverRecorded: (finalDistance: number, starsEarned: number) => void;
   currentBackground: BackgroundKey;
+  isBgScrollEnabled: boolean;
+  currentIcon: string;
 }
 
 export default function GameScreen({
   onBackToMenu,
   onGameOverRecorded,
   currentBackground,
+  isBgScrollEnabled,
+  currentIcon,
 }: GameScreenProps) {
   // On garde une hauteur locale qui s'adaptera parfaitement à l'écran
   const [screenHeight, setScreenHeight] = useState(800);
@@ -34,7 +39,10 @@ export default function GameScreen({
     scaleY1,
     bgY2,
     scaleY2,
-  } = useGameLoop(onGameOverRecorded, screenHeight);
+  } = useGameLoop(onGameOverRecorded, screenHeight, isBgScrollEnabled);
+
+  const activeIconObject = PLAYER_ITEMS.find((item) => item.id === currentIcon);
+  const playerEmoji = activeIconObject?.icon || "🪂";
 
   return (
     <View
@@ -52,14 +60,14 @@ export default function GameScreen({
           source={BACKGROUNDS[currentBackground]}
           style={[
             styles.bgImage,
-            { top: bgY1, transform: [{ scaleY: scaleY1 }] },
+            { opacity: 0.7, top: bgY1, transform: [{ scaleY: scaleY1 }] },
           ]}
         />
         <Image
           source={BACKGROUNDS[currentBackground]}
           style={[
             styles.bgImage,
-            { top: bgY2, transform: [{ scaleY: scaleY2 }] },
+            { opacity: 0.7, top: bgY2, transform: [{ scaleY: scaleY2 }] },
           ]}
         />
 
@@ -81,7 +89,12 @@ export default function GameScreen({
       </View>
 
       {/* Joueur */}
-      <Player x={playerX} y={playerY} size={PLAYER_SIZE} />
+      <Player
+        x={playerX}
+        y={playerY}
+        size={PLAYER_SIZE}
+        currentPlayerIcon={playerEmoji}
+      />
 
       {/* Obstacles et bonus */}
       {items.map((item) => (

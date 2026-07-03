@@ -5,9 +5,10 @@ interface PlayerProps {
   x: number;
   y: number;
   size: number;
+  currentPlayerIcon: string;
 }
 
-export default function Player({ x, y, size }: PlayerProps) {
+export default function Player({ x, y, size, currentPlayerIcon }: PlayerProps) {
   return (
     <View
       style={[
@@ -15,13 +16,14 @@ export default function Player({ x, y, size }: PlayerProps) {
         {
           width: size,
           height: size,
-          borderRadius: size / 2, // Un cercle pour le parachutiste
           transform: [{ translateX: x }, { translateY: y }],
         },
       ]}
     >
-      {/* Petit indicateur visuel, ex: un parachute */}
-      <Text style={styles.emoji}>🪂</Text>
+      {/* 2. On affiche l'émoji dynamique et on adapte sa taille à la hitbox */}
+      <Text style={[styles.emoji, { fontSize: size * 0.75 }]}>
+        {currentPlayerIcon}
+      </Text>
     </View>
   );
 }
@@ -39,6 +41,5 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   emoji: {
-    fontSize: 24,
   },
 });

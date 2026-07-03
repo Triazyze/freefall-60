@@ -16,6 +16,7 @@ export default function App() {
   const [highScore, setHighScore] = useState<number>(0);
   const [currentBackground, setCurrentBackground] = useState<BackgroundKey>("sky1");
   const [unlockedBackgrounds, setUnlockedBackgrounds] = useState<BackgroundKey[]>(["sky1"]);
+  const [isBgScrollEnabled, setIsBgScrollEnabled] = useState<boolean>(true);
 
   // 1. LE REGROUPEMENT ULTIME : Un seul chargement au démarrage de l'app
   useEffect(() => {

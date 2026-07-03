@@ -1,0 +1,32 @@
+{
+  "build": {
+    "internal": {
+      "distribution": "internal",
+      "environment": "production",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "internal-ios": {
+      "distribution": "internal",
+      "environment": "production"
+    },
+    "prod-android-aab": {
+      "distribution": "internal",
+      "environment": "production",
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "prod-all": {
+      "distribution": "internal",
+      "environment": "production",
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

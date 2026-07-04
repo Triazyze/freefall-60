@@ -2,26 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Dimensions, PanResponder } from "react-native";
 import { ItemType } from "../components/Items";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { PARAMS, SPAWN_TABLE, GameObject } from "../constants/gameParams";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-const PLAYER_SIZE = 40;
-const ITEM_SIZE = 30;
-
-const INITIAL_SCROLL_SPEED = 200;
-const MAX_SCROLL_SPEED = 750;
-const ACCELERATION_RATE = 0.02;
-
-const PIXELS_PER_METER = 15;
-const INITIAL_DISTANCE_BETWEEN_ITEMS = 100 + Math.random() * 200;
-
-export interface GameObject {
-  id: string;
-  x: number;
-  y: number;
-  type: ItemType;
-  vx?: number;
-}
 
 export function useGameLoop(
   onGameOverCallback?: (finalDistance: number, finalScore: number) => void,
@@ -33,18 +16,20 @@ export function useGameLoop(
   const [distance, setDistance] = useState(0);
 
   const totalPixelsFallenRef = useRef<number>(0);
-  const currentScrollSpeedRef = useRef<number>(INITIAL_SCROLL_SPEED);
+  const currentScrollSpeedRef = useRef<number>(PARAMS.INITIAL_SCROLL_SPEED);
 
   const currentStarsRef = useRef<number>(0);
 
   const playerY = SCREEN_HEIGHT * 0.2;
   const touchStartXRef = useRef<number>(0);
-  const playerXRef = useRef<number>(SCREEN_WIDTH / 2 - PLAYER_SIZE / 2);
+  const playerXRef = useRef<number>(SCREEN_WIDTH / 2 - PARAMS.PLAYER_SIZE / 2);
   const itemsRef = useRef<GameObject[]>([]);
   const requestRef = useRef<number | null>(null);
 
   const lastSpawnDistanceRef = useRef<number>(0);
-  const nextSpawnDistanceRef = useRef<number>(INITIAL_DISTANCE_BETWEEN_ITEMS);
+  const nextSpawnDistanceRef = useRef<number>(
+    PARAMS.INITIAL_DISTANCE_BETWEEN_ITEMS,
+  );
   const lastTimeRef = useRef<number>(0);
   const isGameOverRef = useRef<boolean>(false);
 
@@ -68,8 +53,8 @@ export function useGameLoop(
         if (isGameOverRef.current) return;
         let newX = touchStartXRef.current + gestureState.dx;
         if (newX < 0) newX = 0;
-        if (newX > SCREEN_WIDTH - PLAYER_SIZE)
-          newX = SCREEN_WIDTH - PLAYER_SIZE;
+        if (newX > SCREEN_WIDTH - PARAMS.PLAYER_SIZE)
+          newX = SCREEN_WIDTH - PARAMS.PLAYER_SIZE;
         playerXRef.current = newX;
       },
     }),
@@ -86,15 +71,18 @@ export function useGameLoop(
 
     // 1. CALCUL DE LA DIFFICULTÉ
     let newSpeed =
-      INITIAL_SCROLL_SPEED + totalPixelsFallenRef.current * ACCELERATION_RATE;
-    if (newSpeed > MAX_SCROLL_SPEED) newSpeed = MAX_SCROLL_SPEED;
+      PARAMS.INITIAL_SCROLL_SPEED +
+      totalPixelsFallenRef.current * PARAMS.ACCELERATION_RATE;
+    if (newSpeed > PARAMS.MAX_SCROLL_SPEED) newSpeed = PARAMS.MAX_SCROLL_SPEED;
     currentScrollSpeedRef.current = newSpeed;
 
     // 2. MOUVEMENT EN PIXELS
     const pixelsMovedThisFrame = currentScrollSpeedRef.current * cappedDelta;
     totalPixelsFallenRef.current += pixelsMovedThisFrame;
 
-    setDistance(Math.floor(totalPixelsFallenRef.current / PIXELS_PER_METER));
+    setDistance(
+      Math.floor(totalPixelsFallenRef.current / PARAMS.PIXELS_PER_METER),
+    );
 
     // Déplacer les objets vers le haut + mouvement latéral si MOBILEOBSTACLE
     itemsRef.current = itemsRef.current.map((item) => {
@@ -104,7 +92,7 @@ export function useGameLoop(
       if (item.type === "MOBILEOBSTACLE" && currentVx !== undefined) {
         nextX += currentVx;
         // Rebond sur les bords de l'écran
-        if (nextX < 0 || nextX > SCREEN_WIDTH - ITEM_SIZE) {
+        if (nextX < 0 || nextX > SCREEN_WIDTH - PARAMS.ITEM_SIZE) {
           currentVx = -currentVx;
         }
       }
@@ -117,7 +105,9 @@ export function useGameLoop(
       };
     });
 
-    itemsRef.current = itemsRef.current.filter((item) => item.y > -ITEM_SIZE);
+    itemsRef.current = itemsRef.current.filter(
+      (item) => item.y > -PARAMS.ITEM_SIZE,
+    );
 
     // Update du BG
     const bgMovement = isBgScrollEnabled ? pixelsMovedThisFrame : 0;
@@ -138,37 +128,53 @@ export function useGameLoop(
       return prev - bgMovement;
     });
 
-    // 3. SPAWN (Système de tirage propre)
+    // 3. SPAWN (Système de tirage par poids, propre et évolutif)
     if (
       totalPixelsFallenRef.current - lastSpawnDistanceRef.current >=
       nextSpawnDistanceRef.current
     ) {
-      const randomX = Math.random() * (SCREEN_WIDTH - ITEM_SIZE);
-      const rand = Math.random();
+      const randomX = Math.random() * (SCREEN_WIDTH - PARAMS.ITEM_SIZE);
 
+      // --- ALGORITHME DE SÉLECTION PAR POIDS ---
+      // 1. On calcule la somme totale de tous les poids configurés
+      const totalWeight = SPAWN_TABLE.reduce(
+        (sum, item) => sum + item.weight,
+        0,
+      );
+
+      // 2. On tire un nombre aléatoire entre 0 et cette somme totale
+      let rand = Math.random() * totalWeight;
       let spawnType: ItemType = "NOTHING";
+
+      // 3. On parcourt le tableau et on soustrait les poids jusqu'à tomber sous 0
+      for (const item of SPAWN_TABLE) {
+        rand -= item.weight;
+        if (rand <= 0) {
+          spawnType = item.type;
+          break;
+        }
+      }
+
+      // Obstacle mobile avec vitesse aléatoire
       let vx: number | undefined = undefined;
-      if (rand < 0.2) {
-        spawnType = "BONUS"; // 20% de chance
-      } else if (rand < 0.3) {
-        spawnType = "SUPERBONUS"; // 10% de chance
-      } else if (rand < 0.6) {
-        spawnType = "OBSTACLE"; // 30% de chance
-      } else if (rand < 0.7) {
-        spawnType = "MOBILEOBSTACLE"; // 10% de chance
-        vx = Math.random() > 0.5 ? 2 : -2; // Vitesse latérale de départ
-      } // Le reste (30%) sera du vide (NOTHING)
+      if (spawnType === "MOBILEOBSTACLE") {
+        vx = Math.random() > 0.5 ? 2 : -2;
+      }
 
-      itemsRef.current.push({
-        id: Math.random().toString(),
-        x: randomX,
-        y: SCREEN_HEIGHT + ITEM_SIZE,
-        type: spawnType,
-        vx: vx,
-      });
+      // Si vide, on ne spawn rien
+      if (spawnType !== "NOTHING") {
+        itemsRef.current.push({
+          id: Math.random().toString(),
+          x: randomX,
+          y: SCREEN_HEIGHT + PARAMS.ITEM_SIZE,
+          type: spawnType,
+          vx: vx,
+        });
+      }
 
+      // Réinitialisation des distances de spawn
       lastSpawnDistanceRef.current = totalPixelsFallenRef.current;
-      nextSpawnDistanceRef.current = 100 + Math.random() * 200;
+      nextSpawnDistanceRef.current = PARAMS.INITIAL_DISTANCE_BETWEEN_ITEMS
     }
 
     // 4. COLLISIONS & GESTION DU CRASH
@@ -176,8 +182,10 @@ export function useGameLoop(
     const pY = playerY;
 
     itemsRef.current = itemsRef.current.filter((item) => {
-      const hitX = pX < item.x + ITEM_SIZE && pX + PLAYER_SIZE > item.x;
-      const hitY = pY < item.y + ITEM_SIZE && pY + PLAYER_SIZE > item.y;
+      const hitX =
+        pX < item.x + PARAMS.ITEM_SIZE && pX + PARAMS.PLAYER_SIZE > item.x;
+      const hitY =
+        pY < item.y + PARAMS.ITEM_SIZE && pY + PARAMS.PLAYER_SIZE > item.y;
 
       if (hitX && hitY) {
         if (item.type === "BONUS") {
@@ -218,7 +226,7 @@ export function useGameLoop(
     if (onGameOverCallback) {
       // On envoie la valeur instantanée et exacte de notre Ref de score
       onGameOverCallback(
-        Math.floor(totalPixelsFallenRef.current / PIXELS_PER_METER),
+        Math.floor(totalPixelsFallenRef.current / PARAMS.PIXELS_PER_METER),
         currentStarsRef.current,
       );
     }
@@ -234,14 +242,14 @@ export function useGameLoop(
   const resetGame = () => {
     if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
-    playerXRef.current = SCREEN_WIDTH / 2 - PLAYER_SIZE / 2;
+    playerXRef.current = SCREEN_WIDTH / 2 - PARAMS.PLAYER_SIZE / 2;
     itemsRef.current = [];
     totalPixelsFallenRef.current = 0;
     lastSpawnDistanceRef.current = 0;
     lastTimeRef.current = 0;
-    currentScrollSpeedRef.current = INITIAL_SCROLL_SPEED;
+    currentScrollSpeedRef.current = PARAMS.INITIAL_SCROLL_SPEED;
     currentStarsRef.current = 0;
-    nextSpawnDistanceRef.current = INITIAL_DISTANCE_BETWEEN_ITEMS;
+    nextSpawnDistanceRef.current = PARAMS.INITIAL_DISTANCE_BETWEEN_ITEMS;
 
     isGameOverRef.current = false;
     setScore(0);
@@ -260,8 +268,8 @@ export function useGameLoop(
     items: itemsRef.current,
     panHandlers: panResponder.panHandlers,
     resetGame,
-    PLAYER_SIZE,
-    ITEM_SIZE,
+    PLAYER_SIZE: PARAMS.PLAYER_SIZE,
+    ITEM_SIZE: PARAMS.ITEM_SIZE,
     bgY1,
     scaleY1,
     bgY2,

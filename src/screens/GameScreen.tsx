@@ -54,32 +54,30 @@ export default function GameScreen({
         setScreenHeight(height);
       }}
     >
-      {/* --- ARRIÈRE-PLAN ANIMÉ EN MIROIR COMPLÈTEMENT STABLE --- */}
+      {/* --- SYSTÈME DE PARALLAXE ADAPTATIF --- */}
       <View style={StyleSheet.absoluteFill}>
-        <Image
-          source={BACKGROUNDS[currentBackground]}
-          style={[
-            styles.bgImage,
-            { opacity: 0.7, top: bgY1, transform: [{ scaleY: scaleY1 }] },
-          ]}
-        />
-        <Image
-          source={BACKGROUNDS[currentBackground]}
-          style={[
-            styles.bgImage,
-            { opacity: 0.7, top: bgY2, transform: [{ scaleY: scaleY2 }] },
-          ]}
-        />
+        <View style={[styles.bgContainer, { top: bgY1 }]}>
+          <Image
+            source={BACKGROUNDS[currentBackground]}
+            style={
+              isBgScrollEnabled ? styles.bgImageCropped : styles.bgImageNormal
+            }
+          />
+        </View>
 
-        {/* ☁️ BANDEAU DE BRUME CORRIGÉ ☁️ */}
-        <View
-          style={[
-            styles.transitionBlur,
-            {
-              top: bgY1 + screenHeight - 30,
-            },
-          ]}
-        />
+        {isBgScrollEnabled && (
+          <View
+            style={[
+              styles.bgContainer,
+              { top: bgY2, transform: [{ scaleY: scaleY2 }] },
+            ]}
+          >
+            <Image
+              source={BACKGROUNDS[currentBackground]}
+              style={styles.bgImageCropped}
+            />
+          </View>
+        )}
       </View>
 
       {/* UI Top Bar */}
@@ -135,21 +133,33 @@ export default function GameScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000", overflow: "hidden" },
-  bgImage: {
+  bgContainer: {
     position: "absolute",
     left: 0,
     right: 0,
     width: "100%",
     height: "100%",
-    resizeMode: "cover",
-    transform: [{ scaleX: 1.9 }],
+    overflow: "hidden",
   },
-  transitionBlur: {
+
+  bgImageCropped: {
     position: "absolute",
+    top: 0,
     left: 0,
-    right: 0,
-    height: 60,
-    backgroundColor: "rgba(227, 227, 227, 0.5)",
+    width: "300%",
+    height: "130%",
+    resizeMode: "stretch",
+    opacity: 0.7,
+  },
+
+  bgImageNormal: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    opacity: 0.7,
   },
   uiContainer: {
     position: "absolute",

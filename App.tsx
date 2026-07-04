@@ -21,7 +21,7 @@ export default function App() {
   >(["sky1"]);
   const [currentIcon, setCurrentIcon] = useState<string>("player_1");
   const [unlockedIcons, setUnlockedIcons] = useState<string[]>(["player_1"]);
-  const [isBgScrollEnabled, setIsBgScrollEnabled] = useState<boolean>(true);
+  const [isBgScrollEnabled, setIsBgScrollEnabled] = useState<boolean>(false);
 
   // Un seul chargement au démarrage de l'app
   useEffect(() => {

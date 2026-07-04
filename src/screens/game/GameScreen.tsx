@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, Image } from "react-native";
-import Player from "../components/Player";
-import Item from "../components/Items";
-import { useGameLoop } from "../hooks/useGameLoop";
-import { BackgroundKey, BACKGROUNDS } from "../constants/background";
-import { PLAYER_ITEMS } from "../constants/shopItems";
+import Player from "../../components/Player";
+import Item from "../../components/Items";
+import { useGameLoop } from "../../hooks/useGameLoop";
+import { BackgroundKey, BACKGROUNDS } from "../../constants/background";
+import { PLAYER_ITEMS } from "../../constants/shopItems";
+import { GameMode } from "../../constants/gameParams";
+import { styles } from "./GameScreen.style";
 
 interface GameScreenProps {
   onBackToMenu: () => void;
@@ -12,6 +14,7 @@ interface GameScreenProps {
   currentBackground: BackgroundKey;
   isBgScrollEnabled: boolean;
   currentIcon: string;
+  gameMode: GameMode
 }
 
 export default function GameScreen({
@@ -20,6 +23,7 @@ export default function GameScreen({
   currentBackground,
   isBgScrollEnabled,
   currentIcon,
+  gameMode
 }: GameScreenProps) {
   // On garde une hauteur locale qui s'adaptera parfaitement à l'écran
   const [screenHeight, setScreenHeight] = useState(800);
@@ -39,7 +43,7 @@ export default function GameScreen({
     scaleY1,
     bgY2,
     scaleY2,
-  } = useGameLoop(onGameOverRecorded, screenHeight, isBgScrollEnabled);
+  } = useGameLoop( gameMode, onGameOverRecorded, screenHeight, isBgScrollEnabled);
 
   const activeIconObject = PLAYER_ITEMS.find((item) => item.id === currentIcon);
   const playerEmoji = activeIconObject?.icon || "🪂";
@@ -130,79 +134,3 @@ export default function GameScreen({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000", overflow: "hidden" },
-  bgContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    width: "100%",
-    height: "100%",
-    overflow: "hidden",
-  },
-
-  bgImageCropped: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "300%",
-    height: "130%",
-    resizeMode: "stretch",
-    opacity: 0.7,
-  },
-
-  bgImageNormal: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-    opacity: 0.7,
-  },
-  uiContainer: {
-    position: "absolute",
-    top: 50,
-    left: 20,
-    right: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    zIndex: 10,
-  },
-  uiText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#fff",
-    backgroundColor: "rgba(0,0,0,0.3)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 5,
-  },
-  gameOverContainer: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 20,
-    gap: 15,
-  },
-  gameOverText: {
-    fontSize: 40,
-    fontWeight: "bold",
-    color: "#e74c3c",
-    marginBottom: 10,
-  },
-  finalScoreText: { fontSize: 18, color: "#fff" },
-  button: {
-    backgroundColor: "#2ecc71",
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 25,
-    width: "70%",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  menuButton: { backgroundColor: "#7f8c8d" },
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-});

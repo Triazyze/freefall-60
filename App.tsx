@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { View, StatusBar, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import HomeScreen from "./src/screens/HomeScreen";
-import GameScreen from "./src/screens/GameScreen";
+import HomeScreen from "./src/screens/home/HomeScreen";
+import GameScreen from "./src/screens/game/GameScreen";
 import ShopScreen from "./src/screens/shop/ShopScreen";
+import ModeSelectScreen from "./src/screens/modeSelect/ModeSelectScreen";
 import { BackgroundKey } from "./src/constants/background";
+import { GameMode } from "./src/constants/gameParams";
 
-type ScreenState = "HOME" | "GAME" | "SHOP";
+type ScreenState = "HOME" | "MODE_SELECT" | "GAME" | "SHOP";
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>("HOME");
 
   // States du jeu et de la boutique
   const [totalStars, setTotalStars] = useState<number>(0);
-  const [highScore, setHighScore] = useState<number>(0);
+  const [highScores, setHighScores] = useState<Record<GameMode, number>>({
+    NORMAL: 0,
+    HARDCORE: 0,
+    WEIRD: 0,
+  });
   const [currentBackground, setCurrentBackground] =
     useState<BackgroundKey>("sky1");
   const [unlockedBackgrounds, setUnlockedBackgrounds] = useState<
@@ -22,6 +28,7 @@ export default function App() {
   const [currentIcon, setCurrentIcon] = useState<string>("player_1");
   const [unlockedIcons, setUnlockedIcons] = useState<string[]>(["player_1"]);
   const [isBgScrollEnabled, setIsBgScrollEnabled] = useState<boolean>(false);
+  const [currentMode, setCurrentMode] = useState<GameMode>("NORMAL");
 
   // Un seul chargement au démarrage de l'app
   useEffect(() => {
@@ -29,7 +36,9 @@ export default function App() {
       try {
         const [
           savedStars,
-          savedHighScore,
+          savedScoreNormal,
+          savedScoreHard,
+          savedScoreWeird,
           savedBg,
           savedUnlockedBackgrounds,
           savedScrollSetting,
@@ -37,7 +46,9 @@ export default function App() {
           savedUnlockedIcons,
         ] = await Promise.all([
           AsyncStorage.getItem("total_stars"),
-          AsyncStorage.getItem("high_score"),
+          AsyncStorage.getItem("high_score_NORMAL"),
+          AsyncStorage.getItem("high_score_HARDCORE"),
+          AsyncStorage.getItem("high_score_WEIRD"),
           AsyncStorage.getItem("current_background"),
           AsyncStorage.getItem("unlocked_backgrounds"),
           AsyncStorage.getItem("bg_scroll_enabled"),
@@ -46,7 +57,11 @@ export default function App() {
         ]);
 
         if (savedStars !== null) setTotalStars(parseInt(savedStars, 10));
-        if (savedHighScore !== null) setHighScore(parseInt(savedHighScore, 10));
+        setHighScores({
+          NORMAL: savedScoreNormal ? parseInt(savedScoreNormal, 10) : 0,
+          HARDCORE: savedScoreHard ? parseInt(savedScoreHard, 10) : 0,
+          WEIRD: savedScoreWeird ? parseInt(savedScoreWeird, 10) : 0,
+        });
         if (savedBg !== null) setCurrentBackground(savedBg as BackgroundKey);
         if (savedUnlockedBackgrounds !== null)
           setUnlockedBackgrounds(JSON.parse(savedUnlockedBackgrounds));
@@ -127,14 +142,22 @@ export default function App() {
   // Gestion de la fin de partie
   const handleGameOver = async (finalDistance: number, starsEarned: number) => {
     const newTotal = totalStars + starsEarned;
-    await saveStars(newTotal); // Sauvegarde et met à jour les étoiles
+    await saveStars(newTotal);
+    const currentModeHighScore = highScores[currentMode];
 
-    if (finalDistance > highScore) {
-      setHighScore(finalDistance);
+    if (finalDistance > currentModeHighScore) {
+      setHighScores((prev) => ({
+        ...prev,
+        [currentMode]: finalDistance,
+      }));
+
       try {
-        await AsyncStorage.setItem("high_score", finalDistance.toString());
+        await AsyncStorage.setItem(
+          `high_score_${currentMode}`,
+          finalDistance.toString(),
+        );
       } catch (e) {
-        console.error("Erreur sauvegarde high score", e);
+        console.error(`Erreur sauvegarde high score pour ${currentMode}`, e);
       }
     }
   };
@@ -154,11 +177,22 @@ export default function App() {
       case "HOME":
         return (
           <HomeScreen
-            onStartGame={() => setCurrentScreen("GAME")}
+            onStartGame={() => setCurrentScreen("MODE_SELECT")}
             onOpenShop={() => setCurrentScreen("SHOP")}
-            highScore={highScore}
+            highScores={highScores}
             isBgScrollEnabled={isBgScrollEnabled}
             toggleScrollSetting={toggleScrollSetting}
+          />
+        );
+
+      case "MODE_SELECT":
+        return (
+          <ModeSelectScreen
+            onSelectMode={(mode) => {
+              setCurrentMode(mode); // FIX : Utilise setCurrentMode ici
+              setCurrentScreen("GAME");
+            }}
+            onBack={() => setCurrentScreen("HOME")}
           />
         );
       case "GAME":
@@ -169,6 +203,7 @@ export default function App() {
             currentBackground={currentBackground}
             isBgScrollEnabled={isBgScrollEnabled}
             currentIcon={currentIcon}
+            gameMode={currentMode} // FIX : Utilise currentMode ici
           />
         );
       case "SHOP":

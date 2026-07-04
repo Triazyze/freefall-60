@@ -15,6 +15,7 @@ export const BACKGROUNDS = {
     sky14: require("../../assets/skies/14.jpeg"),
     sky15: require("../../assets/skies/15.jpeg"),
     sky16: require("../../assets/skies/16.jpeg"),
+    sky17: require("../../assets/skies/17.jpeg"),
 }
 
 export type BackgroundKey = keyof typeof BACKGROUNDS;

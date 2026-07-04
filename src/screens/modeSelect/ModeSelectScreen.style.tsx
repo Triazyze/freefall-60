@@ -3,14 +3,14 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: "#111827", // Bleu-noir très profond pour garder la cohérence "haute altitude"
+    backgroundColor: "#111827", 
     justifyContent: "center", 
     alignItems: "center", 
     padding: 24 
   },
   title: { 
     fontSize: 24, 
-    fontWeight: "900", // Poids maximal pour un effet titre de mission très arcade
+    fontWeight: "900",
     color: "#fff", 
     marginBottom: 40, 
     letterSpacing: 3,
@@ -27,11 +27,10 @@ export const styles = StyleSheet.create({
   modeButton: { 
     width: "100%", 
     padding: 18, 
-    borderRadius: 16, // Coins adoucis modernes, identiques au HomeScreen
-    backgroundColor: "#1f2937", // Fond cockpit gris-bleu pour les cartes de mode
-    borderWidth: 1.5, // Épaisseur de bordure plus fine et précise (la couleur reste gérée dynamiquement par ton code)
+    borderRadius: 16,
+    backgroundColor: "#1f2937", 
+    borderWidth: 1.5,
     alignItems: "center",
-    // Légère ombre pour donner du relief à la carte de sélection
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -43,11 +42,11 @@ export const styles = StyleSheet.create({
     fontWeight: "bold", 
     marginBottom: 6,
     letterSpacing: 1,
-    textTransform: "uppercase" // Titres des modes en majuscules pour le côté pro/gaming
+    textTransform: "uppercase"
   },
   modeDesc: { 
     fontSize: 13, 
-    color: "#9ca3af", // Gris clair texturé pour une meilleure lisibilité
+    color: "#9ca3af",
     textAlign: "center",
     lineHeight: 18,
     fontWeight: "500",
@@ -57,7 +56,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 25,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.05)", // Bouton retour discret mais palpable
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.08)",
   },

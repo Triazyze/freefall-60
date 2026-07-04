@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#111827", // Notre bleu-noir signature "haute altitude"
+    backgroundColor: "#111827",
     paddingHorizontal: 20,
     paddingTop: 50,
   },
@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
   starsText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#f59e0b", // Ambre/Or plus moderne, moins flashy que le jaune brut
+    color: "#f59e0b",
     backgroundColor: "rgba(0, 0, 0, 0.25)",
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -47,7 +47,7 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
   },
   activeTabButton: {
-    backgroundColor: "#1f2937", // Gris-bleu cockpit pour l'onglet actif
+    backgroundColor: "#1f2937",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.05)",
   },
@@ -65,11 +65,11 @@ export const styles = StyleSheet.create({
     gap: 12,
   },
   itemCard: {
-    backgroundColor: "#1f2937", // Même fond de carte que le sélecteur de mode
+    backgroundColor: "#1f2937",
     flexDirection: "row",
     alignItems: "center",
     padding: 14,
-    borderRadius: 16, // Coins adoucis cohérents avec le HomeScreen
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.05)",
     shadowColor: "#000",
@@ -115,7 +115,7 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
   buyButton: {
-    backgroundColor: "#61429f", // Vert émeraude arcade propre
+    backgroundColor: "#61429f",
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 10,

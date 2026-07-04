@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: "#03254c",
+    color: "#144d4c",
     fontWeight: "600",
     letterSpacing: 1,
     textTransform: "uppercase",
@@ -105,7 +105,7 @@ export const styles = StyleSheet.create({
     top: 50,
     right: 25,
     zIndex: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: "rgba(4, 4, 4, 0.36)",
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,

@@ -12,7 +12,7 @@ export default function ModeSelectScreen({ onSelectMode, onBack }: ModeSelectScr
   const modes: { id: GameMode; title: string; desc: string; color: string }[] = [
     { id: "NORMAL", title: "Mode Normal 🪂", desc: "Vitesse classique, bon équilibre.", color: "#2ecc71" },
     { id: "HARDCORE", title: "Mode Hardcore 🔥", desc: "Hyper vitesse et avalanche d'obstacles !", color: "#e74c3c" },
-        { id: "WEIRD", title: "Mode Bizarre 🌈", desc: "", color: "#9b59b6" },
+        { id: "WEIRD", title: "Mode Bizarre 🌈", desc: "Tu connais le mot rapide ?", color: "#9b59b6" },
   ];
 
   return (
